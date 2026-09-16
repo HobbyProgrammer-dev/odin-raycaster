@@ -104,21 +104,21 @@ draw_cell_at_buffer :: proc(print_buff: ^PrintBufferCustom, board: ^Board, x, y:
 	}
 	auto_tile[0b0000] = ' '
 	idx := 0
-	for off_x in 0..<print_buff.cell_width {
-		left, right := 0, 0;
-		if off_x == 0 {
-			left = int(Directions.Left)
+	for off_y in 0..<print_buff.cell_height {
+		up, down := 0, 0;
+		if off_y == 0 {
+			up = int(Directions.Up)
 		}
-		if off_x == print_buff.cell_width - 1 {
-			right = int(Directions.Right)
+		if off_y == print_buff.cell_height - 1 {
+			down = int(Directions.Down)
 		}
-		for off_y in 0..<print_buff.cell_height {
-			up, down := 0, 0;
-			if off_y == 0 {
-				up = int(Directions.Up)
+		for off_x in 0..<print_buff.cell_width {
+			left, right := 0, 0;
+			if off_x == 0 {
+				left = int(Directions.Left)
 			}
-			if off_y == print_buff.cell_height - 1 {
-				down = int(Directions.Down)
+			if off_x == print_buff.cell_width - 1 {
+				right = int(Directions.Right)
 			}
 			auto_tile_idx := right + up + left + down;
 			offset_idx := off_x + off_y * print_buff.buff_width
@@ -142,8 +142,8 @@ print_board :: proc(board: ^Board) {
 	if !ok {
 		fmt.eprintfln("Cell size(%i) smaller than minimum.", cell_size)
 	}
-	for x in 0..<board.width {
-		for y in 0..<board.height {
+	for y in 0..<board.height {
+		for x in 0..<board.width {
 			draw_cell_at_buffer(&print_buff, board, x, y)
 		}
 	}
