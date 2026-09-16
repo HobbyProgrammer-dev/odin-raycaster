@@ -37,9 +37,9 @@ init_board :: proc(height, width: int) -> Board {
 
 get_at_board :: proc(board: ^Board, x: int, y: int) -> (int, bool) {
 	if x < 0 || x >= board.width || y < 0 || y >= board.height {
-		return 0, true
+		return 0, false
 	}
-	return board.vec[x + (y * board.width)], false
+	return board.vec[x + (y * board.width)], true
 }
 
 PrintBufferCustom :: struct {
