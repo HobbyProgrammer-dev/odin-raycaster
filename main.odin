@@ -49,15 +49,18 @@ PrintBufferCustom :: struct {
 	buff: [dynamic]rune,
 }
 
-init_print_buff :: proc(board: ^Board) -> PrintBufferCustom {
-	cell_height := 3
-	cell_width := 6
+init_print_buff :: proc(board: ^Board, cell_size: int) -> (PrintBufferCustom, bool) {
+	if cell_size  < 2 {
+		return PrintBufferCustom {}, false
+	}
+	cell_height := cell_size
+	cell_width := cell_size * 2
 	new_line := 1
 	buff_width := (cell_width * board.width + new_line)
 	buff_height := cell_height * board.height
 	buff_size := buff_width * buff_height
 	buff := make([dynamic]rune, buff_size)
-	return PrintBufferCustom { cell_height, cell_width, new_line, buff_height, buff_width, buff }
+	return PrintBufferCustom { cell_height, cell_width, new_line, buff_height, buff_width, buff }, true
 }
 
 draw_cell_at_buffer :: proc(print_buff: ^PrintBufferCustom, board: ^Board, x, y: int) {
@@ -134,7 +137,11 @@ add_new_line :: proc(print_buff: ^PrintBufferCustom, board: ^Board) {
 }
 
 print_board :: proc(board: ^Board) {
-	print_buff := init_print_buff(board)
+	cell_size := 3
+	print_buff, ok := init_print_buff(board, cell_size)
+	if !ok {
+		fmt.eprintfln("Cell size(%i) smaller than minimum.", cell_size)
+	}
 	for x in 0..<board.width {
 		for y in 0..<board.height {
 			draw_cell_at_buffer(&print_buff, board, x, y)
