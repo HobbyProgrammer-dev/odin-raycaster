@@ -1,8 +1,6 @@
 package main
 
 import "core:fmt"
-import "core:unicode/utf8"
-import "core:strings"
 
 main :: proc() {
 	fmt.printfln("hellope")
@@ -20,29 +18,14 @@ Board :: struct {
 }
 
 Directions :: enum {
-	Right,
-	Up,
-	Left,
-	Down,
-}
-
-get_mask ::proc(dir: Directions) -> int {
-	mask: int;
-	switch dir {
-		case .Right:
-			mask = 0b0001
-		case .Up:
-			mask = 0b0010
-		case .Left:
-			mask = 0b0100
-		case .Down:
-			mask = 0b1000
-	}
-	return mask
+	Right = 0b0001,
+	Up    = 0b0010,
+	Left  = 0b0100,
+	Down  = 0b1000,
 }
 
 has_direction :: proc(val: int, dir: Directions) -> bool {
-	mask := get_mask(dir)
+	mask := int(dir)
 	masked_bit := mask & val
 	return masked_bit != 0
 }
@@ -80,36 +63,63 @@ init_print_buff :: proc(board: ^Board) -> PrintBufferCustom {
 draw_cell_at_buffer :: proc(print_buff: ^PrintBufferCustom, board: ^Board, x, y: int) {
 	buff_idx := x * print_buff.cell_width + (y * print_buff.cell_height) * print_buff.buff_width
 	val, _ := get_at_board(board, x, y)
-	// to_print := "███▀ ▄▀ ▄▀ ▄▀ ▄███"
-	left_wall := [3]rune{'█', '█', '█'};
-	right_wall := [3]rune{'█', '█', '█'};
-	up_wall_char := '▀';
-	down_wall_char := '▄';
-	centre_char := ' '
+	// autotile could be an hashmap. but having an hasmap feels unnecesary, as it would introduce complexness,
+	// an array is easier to implement.
+	auto_tile: [16]rune = [?]rune{
+		0b0000..=0b1111 = '?',
+		
+	};
 	if has_direction(val, .Right) {
-		right_wall = "▀ ▄"
+		auto_tile[int(Directions.Right)] = ' ';
+		auto_tile[int(Directions.Right) | int(Directions.Up)] = '▀'
+		auto_tile[int(Directions.Right) | int(Directions.Down)] = '▄'
+	} else {
+		auto_tile[int(Directions.Right)] = '█';
+		auto_tile[int(Directions.Right) | int(Directions.Up)] = '█'
+		auto_tile[int(Directions.Right) | int(Directions.Down)] = '█'
+		
 	}
 	if has_direction(val, .Left) {
-		left_wall = "▀ ▄"
+		auto_tile[int(Directions.Left)] = ' ';
+		auto_tile[int(Directions.Left) | int(Directions.Up)] = '▀'
+		auto_tile[int(Directions.Left) | int(Directions.Down)] = '▄'
+	} else {
+		auto_tile[int(Directions.Left)] = '█';
+		auto_tile[int(Directions.Left) | int(Directions.Up)] = '█'
+		auto_tile[int(Directions.Left) | int(Directions.Down)] = '█'
+		
 	}
 	if has_direction(val, .Up) {
-		up_wall_char = ' '
+		auto_tile[int(Directions.Up)] = ' '
+	} else {
+		auto_tile[int(Directions.Up)] = '▀'
 	}
 	if has_direction(val, .Down) {
-		down_wall_char = ' '
+		auto_tile[int(Directions.Down)] = ' '
+	} else {
+		auto_tile[int(Directions.Down)] = '▄'
 	}
-	mid := [3]rune{up_wall_char, centre_char, down_wall_char}
-	to_print: [dynamic]rune
-	append(&to_print, ..left_wall[:])
-	for _ in 1..<(print_buff.cell_width-1) {
-		append(&to_print, ..mid[:])
-	}
-	append(&to_print, ..right_wall[:])
+	auto_tile[0b0000] = ' '
 	idx := 0
 	for off_x in 0..<print_buff.cell_width {
+		left, right := 0, 0;
+		if off_x == 0 {
+			left = int(Directions.Left)
+		}
+		if off_x == print_buff.cell_width - 1 {
+			right = int(Directions.Right)
+		}
 		for off_y in 0..<print_buff.cell_height {
+			up, down := 0, 0;
+			if off_y == 0 {
+				up = int(Directions.Up)
+			}
+			if off_y == print_buff.cell_height - 1 {
+				down = int(Directions.Down)
+			}
+			auto_tile_idx := right + up + left + down;
 			offset_idx := off_x + off_y * print_buff.buff_width
-			print_buff.buff[buff_idx + offset_idx] = to_print[idx]
+			print_buff.buff[buff_idx + offset_idx] = auto_tile[auto_tile_idx]
 			idx += 1
 		}
 	}
